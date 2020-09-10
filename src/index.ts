@@ -59,22 +59,31 @@ class BranchNodeInfo {
     return branch;
   }
 }
-let nid = 0;
-class FlowSchemeNode {
-  private _id: number;
-
+interface IFlowSchemeNode{
   nodeType: NodeType;
-  verifyNodeInfo?: {
-    verifierChooseType: VerifierChooseType; // 审批人选择类型
-    verifyMethod: VerifyMethod; // 审批方式
-    value: number | number[];
-    required: boolean;
-  };
-  ccNodeInfo?: {
-    required: boolean; //提交时抄送人是否必填
-    value: number | number[]; //默认抄送人
-    allowAdd: boolean; //允许发起人添加抄送人
-  };
+  verifyNodeInfo?: IVerifyNodeInfo;
+  ccNodeInfo?:ICCNodeInfo ;
+  branchNodeInfos?: BranchNodeInfo[];
+  parent: FlowSchemeDefinition | BranchNodeInfo;
+}
+interface IVerifyNodeInfo{
+  verifierChooseType: VerifierChooseType; // 审批人选择类型
+  verifyMethod: VerifyMethod; // 审批方式
+  value: number | number[];
+  required: boolean;
+}
+interface ICCNodeInfo{
+  required: boolean; //提交时抄送人是否必填
+  value: number | number[]; //默认抄送人
+  allowAdd: boolean; //允许发起人添加抄送人
+}
+
+class FlowSchemeNode {
+  static nid=0;
+  private _id: number;
+  nodeType: NodeType;
+  verifyNodeInfo?:IVerifyNodeInfo;
+  ccNodeInfo?: ICCNodeInfo;
   branchNodeInfos?: BranchNodeInfo[];
 
   parent: FlowSchemeDefinition | BranchNodeInfo;
@@ -82,11 +91,13 @@ class FlowSchemeNode {
     return this.parent.nodes;
   }
 
-  constructor(node: FlowSchemeNode) {
-    const { nodeType, verifyNodeInfo, branchNodeInfos, ccNodeInfo } = node;
+  constructor(node:IFlowSchemeNode) {
+    const { nodeType, verifyNodeInfo, branchNodeInfos, ccNodeInfo,parent } = node;
 
     this.nodeType = nodeType; //节点类型
-    this._id = nid++;
+    this.parent=parent;
+    this._id = FlowSchemeNode.nid++;
+
     switch (nodeType) {
       case NodeType.审批人:
         this.verifyNodeInfo = {
@@ -197,15 +208,16 @@ class FlowSchemeDefinition {
     console.warn("禁止修改nodes的引用，但可以修改nodes的内容", value);
   }
 
-  add(flowSchemeNode: FlowSchemeNode, index?: number) {
-    if (typeof index === "undefined") index = this.nodes.length;
-    this.nodes.splice(index, 0, flowSchemeNode);
-    flowSchemeNode.parentNodes = this.nodes;
-    flowSchemeNode.parent = this;
+  add(node: FlowSchemeNode, index?: number) {
+    if (typeof index === "undefined") index = this.nodes.length;//不传插入最后一位
+    node=new FlowSchemeNode({...node,parent:this})
+
+    this.nodes.splice(index, 0, node);
     //如果是分支类型，在添加完parentNodes之后需要进行init操作
-    if (flowSchemeNode.nodeType === NodeType.分支 && !flowSchemeNode.branchNodeInfos.length) {
-      flowSchemeNode.initBranch();
+    if (node.nodeType === NodeType.分支 && !node.branchNodeInfos?.length) {
+      node.initBranch();
     }
+    return node
   }
   private initNodes(nodes: FlowSchemeNode[]) {
     nodes.forEach((node) => {
