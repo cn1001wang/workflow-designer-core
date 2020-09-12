@@ -209,7 +209,7 @@ class FlowSchemeDefinition {
   }
 
   add(node: FlowSchemeNode, index?: number) {
-    if (typeof index === "undefined") index = this.nodes.length;//不传插入最后一位
+    if (typeof index === "undefined") index = this.nodes.length;//不传index插入最后一位
     node=new FlowSchemeNode({...node,parent:this})
 
     this.nodes.splice(index, 0, node);
