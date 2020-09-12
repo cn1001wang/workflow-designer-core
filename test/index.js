@@ -11,6 +11,15 @@ fs.add(branchNode);
 branchNode.getBranch(0).add(new FlowSchemeNode({ nodeType: NodeType.审批人 }));
 branchNode.getBranch(0).add(new FlowSchemeNode({ nodeType: NodeType.抄送人 }));
 
+//方法1
+fs.add({ nodeType: NodeType.分支, branchNodeInfos:[{condition:``,name:``,subNodes:[]}]})
+//方法2
+let branchNode = fs.add({ nodeType: NodeType.分支 });
+let branchNodeInfo=branchNode.getBranch(0);
+branchNodeInfo.condition=``;
+branchNodeInfo.name=``;
+branchNodeInfo.add({ nodeType: NodeType.审批人 });
+branchNodeInfo.add({ nodeType: NodeType.抄送人 });
 
   // public class FlowSchemeNode
   // {
