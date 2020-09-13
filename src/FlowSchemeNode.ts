@@ -1,5 +1,0 @@
-class FlowSchemeNode{
-    constructor(params) {
-        
-    }
-}

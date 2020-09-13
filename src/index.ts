@@ -21,17 +21,18 @@ enum VerifierChooseType {
   模具组长,
 }
 class BranchNodeInfo {
-  name: string;
+  name: string; //该分支名称
   condition: string; //该分支条件
   private _subNodes: FlowSchemeNode[]; //该分支下的节点数组
   get subNodes() {
     return this._subNodes;
   }
+
   parent: FlowSchemeNode; //对于父节点的引用
   get parentBranchs() {
     return this.parent.branchNodeInfos;
   }
-  constructor(parent: FlowSchemeNode, condition?: string, name?: string, subNodes?: FlowSchemeNode[]) {
+  constructor(parent: FlowSchemeNode, condition?: string, name?: string, subNodes?: IFlowSchemeNode[]) {
     this.condition = condition ?? "请设置条件";
     this.name = name ?? "请设置条件";
     this.parent = parent;
@@ -46,21 +47,28 @@ class BranchNodeInfo {
     }
   }
   //新增Node到第index条分支
-  add(childNode: IFlowSchemeNode, index?: number) {
-    let flowSchemeNode = new FlowSchemeNode({ ...childNode, parent: this });
+  add(childNode: IFlowSchemeNode | FlowSchemeNode, index?: number) {
+    let flowSchemeNode;
+    if (childNode instanceof FlowSchemeNode) {
+      flowSchemeNode = childNode;
+      flowSchemeNode.parent = this;
+    } else {
+      flowSchemeNode = new FlowSchemeNode({ ...childNode, parent: this });
+    }
 
     if (typeof index === "undefined") index = this.subNodes.length;
     this.subNodes.splice(index, 0, flowSchemeNode); //插入
   }
   //移除分支
-  remove() {
+  remove(): BranchNodeInfo | undefined {
+    if (!this.parentBranchs) return;
     let index = this.parentBranchs.indexOf(this);
-    let branch = null;
+    let branch;
     if (index > -1) {
-      branch = this.parentBranchs.splice(index, 1);
+      branch = this.parentBranchs.splice(index, 1)[0];
+      //需要清除整个branchNode
       if (this.parentBranchs.length === 0) {
         this.parent.remove();
-        //需要清除整个branchNode
       }
     }
     return branch;
@@ -95,8 +103,9 @@ class FlowSchemeNode {
   branchNodeInfos?: BranchNodeInfo[];
 
   parent: FlowSchemeDefinition | BranchNodeInfo;
+  root: FlowSchemeDefinition;
   get parentNodes() {
-    return this.parent.nodes;
+    return this.parent instanceof FlowSchemeDefinition ? this.parent.nodes : this.parent.subNodes;
   }
 
   constructor(node: IFlowSchemeNode) {
@@ -104,6 +113,7 @@ class FlowSchemeNode {
 
     this.nodeType = nodeType; //节点类型
     this.parent = parent;
+    this.root = parent instanceof BranchNodeInfo ? parent.parent.root : parent;
     this._id = FlowSchemeNode.nid++;
 
     switch (nodeType) {
@@ -122,15 +132,12 @@ class FlowSchemeNode {
             //new 分支时候 会自动将 分支加入 当前节点下
             new BranchNodeInfo(this, branch.condition, branch.name, branch.subNodes);
           });
-        }else{
+        } else {
           let branchIndex = this.parentNodes.indexOf(this);
           let nextNodes = this.parentNodes.splice(branchIndex + 1);
-          new BranchNodeInfo(this, ``, `优先级1`, branch.subNodes);
-          new BranchNodeInfo(this,``, , branch.subNodes);
-
+          new BranchNodeInfo(this, ``, `优先级1`, nextNodes);
+          new BranchNodeInfo(this, ``, `优先级2`);
         }
-        //如果是分支类型，在添加完parentNodes之后需要进行init操作
-        this.initBranch();
 
         break;
       case NodeType.抄送人:
@@ -143,20 +150,28 @@ class FlowSchemeNode {
       default:
         break;
     }
+
+    //注册根节点传入的回调函数 ，调用方法为 只传入一个Function，用默认的cb调用，否则用用他的key作为函数的函数名
+    for (let key in this.root.callbacks) {
+      //在原型链上或自身已存在属性不进行修改
+      if (key in this) return;
+      Object.defineProperty(this, key, {
+        value: this.root.callbacks[key].bind(this),
+      });
+    }
   }
-  remove() {
+  //移除节点 node.remove()
+  remove(): FlowSchemeNode | undefined {
     let index = this.parentNodes.indexOf(this);
-    let node = null;
+    let node;
     if (index > -1) {
-      [node] = this.parentNodes.splice(index, 1);
-      node.clearParent();
+      node = this.parentNodes.splice(index, 1)[0];
+      //估计也没必要清除父节点的引用吧
+      // this.parent = null;
     }
     return node;
   }
-  edit() {
-    this.isEditActive = true;
-    Vue.prototype.$bus.$emit("FlowSchemeNodeEdit", this);
-  }
+
   getBranch(i: number) {
     let defaultErr = {
       add() {
@@ -167,51 +182,21 @@ class FlowSchemeNode {
     let branch = this.branchNodeInfos[i];
     return branch || defaultErr;
   }
-  // //新增分支
-  // newBranch({ condition, subNodes } = {}) {
-  //   let branchNodeInfo = new BranchNodeInfo(condition, this);
-
-  //   let _subNodes = [];
-  //   Object.defineProperty(branchNodeInfo, "subNodes", {
-  //     enumerable: true,
-  //     configurable: true,
-  //     get() {
-  //       // - //用this是因为get会让vue失去响应式，vue实际响应的是_subNodes
-  //       // + //使用configurable让subNodes能够被改变 ，才能被Vue的defineReactive所监听
-  //       return _subNodes;
-  //     },
-  //     set(value) {
-  //       console.warn("禁止修改分支的subNodes的引用，但可以修改subNodes的内容", value);
-  //     },
-  //   });
-  //   this.branchNodeInfos.push(branchNodeInfo);
-  //   //直接给subNodes重新创建
-  //   if (subNodes) {
-  //     subNodes.forEach((childNode) => {
-  //       let newChildNode = new FlowSchemeNode(childNode);
-  //       branchNodeInfo.add(newChildNode);
-  //     });
-  //   }
-  //   return branchNodeInfo;
-  // }
-  initBranch() {
-    let branchIndex = this.parentNodes.indexOf(this);
-    let nextNodes = this.parentNodes.splice(branchIndex + 1);
-    this.branchNodeInfos.subNodes=nextNodes;
-
-    this.newBranch({ subNodes: nextNodes });
-    this.newBranch();
-  }
-  clearParent() {
-    this.parentNodes = null;
-    this.parent = null;
-  }
 }
-
+interface FlowSchemeDefinitionCbs {
+  [propName: string]: Function;
+}
 class FlowSchemeDefinition {
-  constructor(nodes?: FlowSchemeNode[]) {
+  constructor(nodes?: FlowSchemeNode[], cbs?: FlowSchemeDefinitionCbs | Function) {
     this._nodes = [];
     nodes && this.initNodes(nodes);
+
+    //初始化 配置项 ：node.edit 回调
+    if (cbs) {
+      this.callbacks = typeof cbs === "function" ? { editCallback: cbs } : cbs;
+    } else {
+      this.callbacks = { cb: function () {} };
+    }
   }
   private _nodes: FlowSchemeNode[];
   get nodes() {
@@ -220,6 +205,7 @@ class FlowSchemeDefinition {
   set nodes(value) {
     console.warn("禁止修改nodes的引用，但可以修改nodes的内容", value);
   }
+  callbacks: FlowSchemeDefinitionCbs;
 
   add(nodeOps: IFlowSchemeNode, index?: number) {
     if (typeof index === "undefined") index = this.nodes.length; //不传index插入最后一位

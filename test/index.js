@@ -1,25 +1,30 @@
 
 
-const FlowSchemeDefinition= require('../dist/index').default;
+const {FlowSchemeDefinition,NodeType}= require('../dist/index');
 
-let fs = new FlowSchemeDefinition();
-fs.add(new FlowSchemeNode({ nodeType: NodeType.开始 }));
-fs.add(new FlowSchemeNode({ nodeType: NodeType.审批人 }));
-fs.add(new FlowSchemeNode({ nodeType: NodeType.抄送人 }));
-let branchNode = new FlowSchemeNode({ nodeType: NodeType.分支 });
-fs.add(branchNode);
-branchNode.getBranch(0).add(new FlowSchemeNode({ nodeType: NodeType.审批人 }));
-branchNode.getBranch(0).add(new FlowSchemeNode({ nodeType: NodeType.抄送人 }));
+let fs = new FlowSchemeDefinition(null,{editBranch:function(){console.log(this)}});
+// fs.add(new FlowSchemeNode({ nodeType: NodeType.开始 }));
+// fs.add(new FlowSchemeNode({ nodeType: NodeType.审批人 }));
+// fs.add(new FlowSchemeNode({ nodeType: NodeType.抄送人 }));
+// let branchNode = new FlowSchemeNode({ nodeType: NodeType.分支 });
+// fs.add(branchNode);
+// branchNode.getBranch(0).add(new FlowSchemeNode({ nodeType: NodeType.审批人 }));
+// branchNode.getBranch(0).add(new FlowSchemeNode({ nodeType: NodeType.抄送人 }));
 
 //方法1
-fs.add({ nodeType: NodeType.分支, branchNodeInfos:[{condition:``,name:``,subNodes:[]}]})
+fs.add({ nodeType: NodeType.分支, branchNodeInfos:[{condition:``,name:``,subNodes:[
+  { nodeType: NodeType.审批人 }
+]}]})
 //方法2
-let branchNode = fs.add({ nodeType: NodeType.分支 });
-let branchNodeInfo=branchNode.getBranch(0);
-branchNodeInfo.condition=``;
-branchNodeInfo.name=``;
-branchNodeInfo.add({ nodeType: NodeType.审批人 });
-branchNodeInfo.add({ nodeType: NodeType.抄送人 });
+// let branchNode = fs.add({ nodeType: NodeType.分支 });
+// let branchNodeInfo=branchNode.getBranch(0);
+// branchNodeInfo.condition=`a>1`;
+// branchNodeInfo.name=`你好`;
+// branchNodeInfo.add({ nodeType: NodeType.审批人 });
+// branchNodeInfo.add({ nodeType: NodeType.抄送人 });
+
+let node=fs.add({nodeType:NodeType.审批人})
+console.log(node.editBranch())
 
   // public class FlowSchemeNode
   // {
