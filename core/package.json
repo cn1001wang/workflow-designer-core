@@ -17,7 +17,7 @@
     "/dist"
   ],
   "scripts": {
-    "build": "yarn build:es6;yarn build:cmjs;yarn build:web",
+    "build": "yarn build:es6 && yarn build:cmjs && yarn build:web",
     "build:es6": "tsc -P tsconfig.json --module ES6 --outDir dist/es6",
     "build:cmjs": "tsc -P tsconfig.json --module commonjs --outDir dist/cmjs",
     "build:web": "browserify dist/cmjs/index.js --standalone myLib -o dist/web/bundle.js",
