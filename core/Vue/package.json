@@ -1,0 +1,8 @@
+{
+  "name": "workflow-designer-vue",
+  "version": "1.0.0",
+  "description": "workflow-designer with Vue",
+  "main": "index.js",
+  "author": "cn1001wang",
+  "license": "MIT"
+}
