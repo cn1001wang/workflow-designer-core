@@ -226,6 +226,5 @@ class FlowSchemeDefinition {
   }
 }
 
-// FlowSchemeNode
-export { NodeType, VerifyMethod, VerifierChooseType, FlowSchemeDefinition };
+export { NodeType, VerifyMethod, VerifierChooseType, FlowSchemeNode, FlowSchemeDefinition };
 export default FlowSchemeDefinition;

@@ -1,6 +1,7 @@
 <!--  -->
 <template>
-  <div class="node-box-wrap">
+  <div>box</div>
+  <!-- <div class="node-box-wrap">
     <div class="node-box" :class="[node.isEditActive ? 'node-box_active' : '', nodeType === 0 ? 'node-box_start' : '']">
       <template v-if="nodeType === 0">
         <div class="box-title">流程发起人</div>
@@ -35,14 +36,14 @@
       </template>
     </div>
     <NodeAddBtn v-on="$listeners" />
-  </div>
+  </div> -->
 </template>
 
 <script>
-import NodeAddBtn from "./NodeAddBtn";
-import { NodeTypeIcons } from "@/views/WorkFlow/util";
+// import NodeAddBtn from "./NodeAddBtn";
+// import { NodeTypeIcons } from "@/views/WorkFlow/util";
 export default {
-  components: { NodeAddBtn },
+  // components: { NodeAddBtn },
   props: {
     title: String,
     content: String,
