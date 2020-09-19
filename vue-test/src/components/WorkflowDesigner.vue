@@ -1,7 +1,7 @@
 <!--  -->
 <template>
   <div class="workflow-box py-3" v-if="fs">
-    <NodeList v-model="fs.nodes" :fs="fs" @add="handleAddNode"></NodeList>
+    <NodeList :fs="fs" @add="handleAddNode"></NodeList>
     <div class="end-node">
       <div class="end-node-circle"></div>
       <div class="end-node-text grey--text fs-md mt-1">流程结束</div>
@@ -13,7 +13,6 @@
 import { NodeType } from "workflow-designer-core";
 import FlowSchemeDefinition from "workflow-designer-core";
 import NodeList from "./NodeList.vue";
-import { reactive } from "vue";
 
 export default {
   name: "WorkFlowDesigner",
@@ -27,6 +26,9 @@ export default {
     };
   },
   methods: {
+    handleAddNode(){
+
+    },
     initFS() {
       if (this.value?.nodes && this.value.nodes.length) {
         this.fs = new FlowSchemeDefinition(this.value.nodes);

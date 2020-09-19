@@ -50,6 +50,7 @@ export default {
     node: Object,
     nodeType: {
       validator: function (value) {
+        console.log(value);
         // 这个值必须匹配下列字符串中的一个
         return [0, 1, 3].includes(value);
       },
@@ -57,7 +58,7 @@ export default {
   },
   data() {
     return {
-      NodeTypeIcons,
+      // NodeTypeIcons,
       titleActive: false,
     };
   },
@@ -85,6 +86,7 @@ export default {
       this.titleActive = false;
     },
   },
+  mounted() {},
 };
 </script>
 
