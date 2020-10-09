@@ -7,29 +7,29 @@ import { h } from "vue";
  *Vue imports in vue-cli in the next major.
  */
 import Box from "./Box.vue";
-// import BranchNode from "./BranchNode";
 import { VerifierChooseType, VerifyMethod } from "workflow-designer-core";
-import users from "/src/api/user";
+// import BranchNode from "./BranchNode";
+// import { VerifierChooseTypeMap, VerifyMethodMap } from "@/views/WorkFlow/util";
+// import getUsers from "@/api/user";
 // import getRoles from "@/api/role";
 
 export default {
   name: "nodeList",
   components: { Box },
-  props: {
-    fs: Object,
+  model: {
+    prop: "nodes",
+    event: "input",
   },
   setup(props) {
-    const { fs } = props;
+    console.log(args);
 
     function getVerifyContent({ verifyMethod, verifierChooseType, value }) {
       let method = " " + VerifyMethod[verifyMethod],
         content = VerifierChooseType[verifierChooseType];
       if ([0, 3, 4, 5].includes(verifierChooseType)) return content;
-      //角色
       if (verifierChooseType === 2) {
         let role = this.roles.find((el) => el.id == value);
         return role ? role.displayName + method : content + method;
-        //员工
       } else if (verifierChooseType === 1) {
         if (typeof value !== "object") return content + method;
         switch (value.length) {
@@ -42,18 +42,17 @@ export default {
         }
       }
     }
-
     const getNodeCom = function ({ nodeType, verifyNodeInfo, ccNodeInfo }) {
       let ccvalue = ccNodeInfo && ccNodeInfo.value;
       switch (nodeType) {
         case 0:
           return {
-            com: Box,
+            com: "Box",
             attrs: {},
           };
         case 1:
           return {
-            com: Box,
+            com: "Box",
             attrs: {
               title: "审批人",
               content: getVerifyContent(verifyNodeInfo),
@@ -71,7 +70,7 @@ export default {
               title: "抄送人",
               content:
                 ccvalue && ccvalue.length
-                  ? users
+                  ? this.users
                       .filter((el) => ccvalue.includes(el.id))
                       .map((el) => el.name)
                       .join(",")
@@ -80,37 +79,34 @@ export default {
           };
         default:
           return {
-            com: Box,
-            attrs: { title: "未捕获", content: "未捕获" },
+            com: "Box",
+            attrs: { title: "未捕获", content: "发起人自选" },
           };
       }
     };
 
-    const childNodes = props.fs.nodes.map((node, index) => {
+    const childNodes = nodes.map((node, index) => {
       let { attrs, com } = getNodeCom(node);
       return h(com, {
         node,
-        myNodeType: node.nodeType,
+        nodeType: node.nodeType,
         key: node._id,
         id: node._id,
         ...attrs,
         onAdd: (node) => {
           //将新节点插入当前节点下方
           let insertIndex = index + 1;
-          let nodeIns = fs.add(node, insertIndex);
+          let nodeIns = this.fs.add(node, insertIndex);
           this.$emit("add", nodeIns, insertIndex);
         },
       });
     });
-    console.log(childNodes);
+
     return () =>
-      h(
-        "div",
-        {
-          class: ["node-list-box"],
-        },
-        childNodes
-      );
+      h("div", {
+        class: ["node-list-box"],
+        childNodes,
+      });
   },
 };
 </script>

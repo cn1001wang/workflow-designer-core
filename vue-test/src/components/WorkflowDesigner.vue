@@ -30,7 +30,7 @@ export default {
 
     },
     initFS() {
-      if (this.value?.nodes && this.value.nodes.length) {
+      if (this.value?.nodes?.length) {
         this.fs = new FlowSchemeDefinition(this.value.nodes);
       } else {
         let fs = new FlowSchemeDefinition();
