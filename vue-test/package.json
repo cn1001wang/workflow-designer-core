@@ -6,8 +6,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "vue": "^3.0.0-rc.1",
-    "workflow-designer-core": "../core"
+    "vue": "^3.0.0-rc.1"
   },
   "devDependencies": {
     "@vue/compiler-sfc": "^3.0.0-rc.1",

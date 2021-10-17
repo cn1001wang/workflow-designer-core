@@ -9,13 +9,13 @@ declare enum VerifyMethod {
     会签 = 1,
     或签 = 2
 }
-declare enum VerifierChooseType {
+declare enum UserChooseType {
     发起人自选 = 0,
     指定成员 = 1,
     指定角色 = 2,
-    部门主管 = 3,
+    主管 = 3,
     项目经理 = 4,
-    模具组长 = 5
+    其他待扩展 = 5
 }
 declare class BranchNodeInfo {
     name: string;
@@ -36,19 +36,22 @@ interface IFlowSchemeNode {
     parent: FlowSchemeDefinition | BranchNodeInfo;
 }
 interface IVerifyNodeInfo {
-    verifierChooseType: VerifierChooseType;
+    verifierChooseType: UserChooseType;
     verifyMethod: VerifyMethod;
     value: number | number[];
     required: boolean;
+    depth: number;
 }
 interface ICCNodeInfo {
+    ccChooseType: UserChooseType;
     required: boolean;
     value: number | number[];
     allowAdd: boolean;
+    depth: number;
 }
 declare class FlowSchemeNode {
     static nid: number;
-    private _id;
+    id: number;
     nodeType: NodeType;
     verifyNodeInfo?: IVerifyNodeInfo;
     ccNodeInfo?: ICCNodeInfo;
@@ -73,6 +76,8 @@ declare class FlowSchemeDefinition {
     callbacks: FlowSchemeDefinitionCbs;
     add(nodeOps: IFlowSchemeNode, index?: number): FlowSchemeNode;
     private initNodes;
+    stringify(): void;
 }
-export { NodeType, VerifyMethod, VerifierChooseType, FlowSchemeDefinition };
+export { IFlowSchemeNode, IVerifyNodeInfo, ICCNodeInfo, FlowSchemeDefinitionCbs };
+export { NodeType, VerifyMethod, UserChooseType, FlowSchemeNode, FlowSchemeDefinition };
 export default FlowSchemeDefinition;

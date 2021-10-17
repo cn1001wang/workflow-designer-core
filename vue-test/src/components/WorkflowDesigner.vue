@@ -10,8 +10,7 @@
 </template>
 
 <script>
-import { NodeType } from "workflow-designer-core";
-import FlowSchemeDefinition from "workflow-designer-core";
+import FlowSchemeDefinition,{ NodeType }  from "workflow-designer-core";
 import NodeList from "./NodeList.vue";
 
 export default {

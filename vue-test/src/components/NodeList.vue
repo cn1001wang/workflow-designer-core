@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 import { h } from "vue";
 
 /* github.com/vitejs/vite/issues/178
@@ -7,7 +7,13 @@ import { h } from "vue";
  *Vue imports in vue-cli in the next major.
  */
 import Box from "./Box.vue";
-import { VerifierChooseType, VerifyMethod } from "workflow-designer-core";
+import FlowSchemeDefinition, {
+  UserChooseType,
+  VerifyMethod,
+  FlowSchemeNode,
+  IVerifyNodeInfo,
+  ICCNodeInfo,
+} from "workflow-designer-core";
 // import BranchNode from "./BranchNode";
 // import { VerifierChooseTypeMap, VerifyMethodMap } from "@/views/WorkFlow/util";
 // import getUsers from "@/api/user";
@@ -20,34 +26,78 @@ export default {
     prop: "nodes",
     event: "input",
   },
+  props: {
+    fs: FlowSchemeDefinition,
+  },
   setup(props) {
-    console.log(args);
-
-    function getVerifyContent({ verifyMethod, verifierChooseType, value }) {
+    function getVerifyContent({
+      verifyMethod,
+      verifierChooseType,
+      value,
+      depth,
+    }: IVerifyNodeInfo) {
       let method = " " + VerifyMethod[verifyMethod],
-        content = VerifierChooseType[verifierChooseType];
-      if ([0, 3, 4, 5].includes(verifierChooseType)) return content;
-      if (verifierChooseType === 2) {
+        content = UserChooseType[verifierChooseType];
+      // TODO 给verifierChooseType制作function来满足不同要求
+      // 指定角色时，value为number；意思为该角色下所有人员或签；目前只能或签
+      if (verifierChooseType === UserChooseType.指定角色) {
         let role = this.roles.find((el) => el.id == value);
         return role ? role.displayName + method : content + method;
-      } else if (verifierChooseType === 1) {
-        if (typeof value !== "object") return content + method;
-        switch (value.length) {
-          case 0:
-            return content + method;
-          case 1:
-            return this.users.find((el) => el.id === value[0])?.name;
-          default:
-            return value.length + "人" + method;
+      } else if (verifierChooseType === UserChooseType.指定成员) {
+        if (typeof value == "object") {
+          switch (value.length) {
+            case 0:
+              return content + method;
+            case 1:
+              return this.users.find((el) => el.id === value[0])?.name;
+            default:
+              return value.length + "人" + method;
+          }
         }
+      } else if (verifierChooseType === UserChooseType.主管) {
+        return `本级${depth > 1 ? " ~ " + depth + "级" : ""}` + "主管";
+      } else {
+        return content;
       }
     }
-    const getNodeCom = function ({ nodeType, verifyNodeInfo, ccNodeInfo }) {
+function getCCContent({
+      value,
+      depth,ccChooseType}:ICCNodeInfo){
+      let         content = UserChooseType[ccChooseType];
+      // TODO 给verifierChooseType制作function来满足不同要求
+      // 指定角色时，value为number；意思为该角色下所有人员或签；目前只能或签
+      if (ccChooseType === UserChooseType.指定角色) {
+        let role = this.roles.find((el) => el.id == value);
+        return role ? role.displayName : content ;
+      } else if (ccChooseType === UserChooseType.指定成员) {
+        if (typeof value == "object") {
+          switch (value.length) {
+            case 0:
+              return content ;
+            case 1:
+              return this.users.find((el) => el.id === value[0])?.name;
+            default:
+              return "抄送"+ value.length + "人";
+          }
+        }
+      } else if (ccChooseType === UserChooseType.主管) {
+        return `本级${depth > 1 ? " ~ " + depth + "级" : ""}` + "主管";
+      } else {
+        return content;
+      }
+
+}
+
+    const getNodeCom = function ({
+      nodeType,
+      verifyNodeInfo,
+      ccNodeInfo,
+    }: FlowSchemeNode) {
       let ccvalue = ccNodeInfo && ccNodeInfo.value;
       switch (nodeType) {
         case 0:
           return {
-            com: "Box",
+            com: Box,
             attrs: {},
           };
         case 1:
@@ -68,13 +118,7 @@ export default {
             com: "Box",
             attrs: {
               title: "抄送人",
-              content:
-                ccvalue && ccvalue.length
-                  ? this.users
-                      .filter((el) => ccvalue.includes(el.id))
-                      .map((el) => el.name)
-                      .join(",")
-                  : "发起人自选",
+              content: getCCContent(ccNodeInfo),
             },
           };
         default:
@@ -85,13 +129,14 @@ export default {
       }
     };
 
-    const childNodes = nodes.map((node, index) => {
+    const childNodes = props.fs.nodes.map((node: FlowSchemeNode, index) => {
+      debugger;
       let { attrs, com } = getNodeCom(node);
       return h(com, {
         node,
         nodeType: node.nodeType,
-        key: node._id,
-        id: node._id,
+        key: node.id,
+        id: node.id,
         ...attrs,
         onAdd: (node) => {
           //将新节点插入当前节点下方
